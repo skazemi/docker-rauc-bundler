@@ -19,7 +19,8 @@ RUN apt update && apt upgrade -y
 RUN apt install --no-install-recommends -y $RAUC_BUILD_DEPENDENCIES
 RUN apt install --no-install-recommends -y squashfs-tools libjson-glib-1.0-0
 
-ENV RAUC_VERSION v1.10.1
+ARG RAUC_VERSION=v1.10.1
+ENV RAUC_VERSION=${RAUC_VERSION}
 
 # Build and install RAUC
 RUN git clone https://github.com/rauc/rauc.git /rauc && \
@@ -37,6 +38,8 @@ RUN apt remove -y $RAUC_BUILD_DEPENDENCIES && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN rauc --version
+RUN mkdir -p "/bundle/keys" "/bundle/input" "/bundle/output"
 
+VOLUME [ "/bundle/keys", "/bundle/input", "/bundle/output" ]
+WORKDIR "/bundle"
 ENTRYPOINT ["rauc"]
