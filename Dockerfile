@@ -6,10 +6,9 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV RAUC_BUILD_DEPENDENCIES git \
     automake \
     build-essential \
+    meson \
     libtool \
-    libjson-glib-dev \
-    libdbus-1-dev \
-    libcurl3-dev \
+    libglib2.0-dev \
     libssl-dev \
     ca-certificates
 
@@ -17,20 +16,29 @@ ENV RAUC_BUILD_DEPENDENCIES git \
 RUN apt update && apt upgrade -y
 
 RUN apt install --no-install-recommends -y $RAUC_BUILD_DEPENDENCIES
-RUN apt install --no-install-recommends -y squashfs-tools libjson-glib-1.0-0
+RUN apt install --no-install-recommends -y squashfs-tools libglib2.0-0 libssl3
 
-ARG RAUC_VERSION=v1.10.1
+ARG RAUC_VERSION=v1.11.3
 ENV RAUC_VERSION=${RAUC_VERSION}
 
-# Build and install RAUC
+# Build and install RAUC using meson xor automake
 RUN git clone https://github.com/rauc/rauc.git /rauc && \
     cd /rauc && \
-    git checkout "$RAUC_VERSION" && \
+    git checkout "$RAUC_VERSION"
+
+RUN test ! -e /rauc/meson.build && exit 0; \
+    cd /rauc && \
+    meson setup build -Dnetwork=false -Dservice=false -Dstreaming=false -Djson=disabled && \
+    meson compile -C build && \
+    meson install -C build
+
+RUN test -e /rauc/meson.build && exit 0; \
+    cd /rauc && \
     ./autogen.sh && \
-    ./configure --enable-json --prefix=/usr && \
-    make install && \
-    cd / && \
-    rm -rf /rauc 
+    ./configure --disable-network --disable-service --disable-streaming --disable-json && \
+    make install
+
+RUN rm -rf /rauc
 
 # Remove build dependencies
 RUN apt remove -y $RAUC_BUILD_DEPENDENCIES && \
