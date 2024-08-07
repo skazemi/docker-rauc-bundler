@@ -4,6 +4,10 @@ Minimal docker image for creating/handling [RAUC](https://github.com/rauc/rauc) 
 
 ## Build
 
+```bash
+git clone https://github.com/skazemi/docker-rauc-bundler.git && cd docker-rauc-bundler
+```
+
 ### Build default version
 
 ```bash
